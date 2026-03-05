@@ -2,9 +2,16 @@
   "dependencies": {
     "axios": "^1.13.6",
     "cors": "^2.8.6",
+    "concurrently": "^7.6.0",
     "dotenv": "^17.3.1",
     "express": "^5.2.1",
-    "leaflet": "^1.9.4",
     "mongoose": "^9.2.3"
+  }, 
+  "scripts": {
+    "tokens:build": "style-dictionary build --config style-dictionary.config.js",
+    "design:pull": "FIGMA_TOKEN=$FIGMA_TOKEN FIGMA_FILE_KEY=$FIGMA_FILE_KEY figma-export tokens --output frontend/design/tokens.json",
+    "dev": "concurrently \"cd backend && npm run dev\" \"cd frontend && npm run dev\""
   }
 }
+
+

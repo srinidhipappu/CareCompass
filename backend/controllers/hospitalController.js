@@ -18,6 +18,30 @@ exports.listHospitals = async (req, res) => {
   }
 };
 
+// GET /api/hospitals/nearby?lat=..&lng=..&radius= (radius in km, optional default 50)
+exports.hospitalsNearby = async (req, res) => {
+  try {
+    const { lat, lng, radius = 50, page = 1, limit = 20 } = req.query;
+    if (!lat || !lng) return res.status(400).json(errorResponse('Missing lat or lng'));
+
+    const meters = parseFloat(radius) * 1000;
+    const hospitals = await Hospital.find({
+      locationCoords: {
+        $near: {
+          $geometry: { type: 'Point', coordinates: [parseFloat(lng), parseFloat(lat)] },
+          $maxDistance: meters,
+        },
+      },
+    })
+      .skip((page - 1) * limit)
+      .limit(parseInt(limit));
+
+    res.json(successResponse(hospitals));
+  } catch (err) {
+    res.status(500).json(errorResponse('Failed to find nearby hospitals'));
+  }
+};
+
 exports.hospitalsBySpecialty = async (req, res) => {
   try {
     const { specialization } = req.params;
@@ -30,9 +54,13 @@ exports.hospitalsBySpecialty = async (req, res) => {
 
 exports.createHospital = async (req, res) => {
   try {
-    const { name, location, specializations, contact, rating } = req.body;
+    const { name, location, zip, locationCoords, specializations, contact, rating } = req.body;
     if (!name) return res.status(400).json(errorResponse('Name is required'));
-    const hospital = await Hospital.create({ name, location, specializations, contact, rating });
+    const toCreate = { name, location, zip, specializations, contact, rating };
+    if (locationCoords && Array.isArray(locationCoords.coordinates)) {
+      toCreate.locationCoords = locationCoords;
+    }
+    const hospital = await Hospital.create(toCreate);
     res.status(201).json(successResponse(hospital, 'Hospital created'));
   } catch (err) {
     res.status(500).json(errorResponse('Failed to create hospital'));
