@@ -3,7 +3,6 @@ const router = express.Router();
 const Doctor = require('../models/Doctor');
 const { successResponse, errorResponse } = require('../utils/response');
 const doctorController = require('../controllers/doctorController');
-
 const adminAuth = require('../middleware/adminAuth');
 
 router.post('/', adminAuth, doctorController.createDoctor);

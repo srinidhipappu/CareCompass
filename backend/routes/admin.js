@@ -1,16 +1,15 @@
 const express = require('express');
 const router = express.Router();
-const { runSeed } = require('../utils/seed');
 const adminAuth = require('../middleware/adminAuth');
+const { runSeed } = require('../services/seedService');
+const { successResponse, errorResponse } = require('../utils/response');
 
-// Protected seed endpoint: POST /api/admin/seed
 router.post('/seed', adminAuth, async (req, res) => {
   try {
-    await runSeed();
-    res.json({ success: true, message: 'Seed executed' });
+    const result = await runSeed();
+    res.json(successResponse({ hospitals: result.createdHospitals.length, doctors: result.createdDoctors.length }, 'Seed completed'));
   } catch (err) {
-    console.error('Seed failed via API', err);
-    res.status(500).json({ success: false, error: 'Seed failed' });
+    res.status(500).json(errorResponse('Seed failed'));
   }
 });
 
