@@ -2,6 +2,11 @@ const express = require('express');
 const router = express.Router();
 const Doctor = require('../models/Doctor');
 const { successResponse, errorResponse } = require('../utils/response');
+const doctorController = require('../controllers/doctorController');
+
+const adminAuth = require('../middleware/adminAuth');
+
+router.post('/', adminAuth, doctorController.createDoctor);
 
 router.get('/', async (req, res) => {
   try {
@@ -36,14 +41,6 @@ router.get('/hospital/:hospitalId', async (req, res) => {
   }
 });
 
-router.get('/:id', async (req, res) => {
-  try {
-    const doctor = await Doctor.findById(req.params.id);
-    if (!doctor) return res.status(404).json(errorResponse('Doctor not found'));
-    res.json(successResponse(doctor));
-  } catch (err) {
-    res.status(500).json(errorResponse('Failed to get doctor'));
-  }
-});
+router.get('/:id', doctorController.getDoctorById);
 
 module.exports = router;

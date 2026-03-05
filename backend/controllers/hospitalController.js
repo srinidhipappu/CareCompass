@@ -28,6 +28,17 @@ exports.hospitalsBySpecialty = async (req, res) => {
   }
 };
 
+exports.createHospital = async (req, res) => {
+  try {
+    const { name, location, specializations, contact, rating } = req.body;
+    if (!name) return res.status(400).json(errorResponse('Name is required'));
+    const hospital = await Hospital.create({ name, location, specializations, contact, rating });
+    res.status(201).json(successResponse(hospital, 'Hospital created'));
+  } catch (err) {
+    res.status(500).json(errorResponse('Failed to create hospital'));
+  }
+};
+
 exports.getHospitalById = async (req, res) => {
   try {
     const hospital = await Hospital.findById(req.params.id);
