@@ -2,7 +2,7 @@
   "tfidf_model": "Logistic Regression",
   "tfidf_accuracy": 0.902,
   "tfidf_f1": 0.9022,
-  "bert_available": true,
+  "bert_available": false,
   "bert_accuracy": 0.9206,
   "diseases": [
     "Allergy",
