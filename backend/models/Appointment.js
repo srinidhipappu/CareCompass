@@ -6,6 +6,7 @@ const AppointmentSchema = new mongoose.Schema({
   hospitalId: { type: mongoose.Schema.Types.ObjectId, ref: 'Hospital' },
   appointmentDate: { type: Date, required: true },
   symptoms: { type: String },
+  urgency: { type: String, default: 'Normal' },
   status: { type: String, default: 'pending' },
   createdAt: { type: Date, default: Date.now },
 });

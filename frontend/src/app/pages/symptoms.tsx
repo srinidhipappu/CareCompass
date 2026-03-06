@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
+import api from '../../lib/api';
 import { Navbar } from '../components/navbar';
 import { LoadingSpinner } from '../components/loading-spinner';
 import { Mic } from 'lucide-react';
@@ -9,15 +10,25 @@ export default function SymptomsPage() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const navigate = useNavigate();
 
-  const handleAnalyze = () => {
+  const handleAnalyze = async () => {
     if (!symptoms.trim()) return;
-    
+
     setIsAnalyzing(true);
-    
-    // Simulate AI analysis
-    setTimeout(() => {
+    try {
+      const user = typeof window !== 'undefined' ? localStorage.getItem('user') : null;
+      const parsedUser = user ? JSON.parse(user) : null;
+      const payload = { userId: parsedUser?.id, symptomsText: symptoms };
+      const res = await api.analyzeSymptoms(payload);
+      if (res && res.data) {
+        localStorage.setItem('lastAIResult', JSON.stringify(res.data));
+      }
       navigate('/results');
-    }, 3000);
+    } catch (err: any) {
+      localStorage.setItem('lastAIResult', JSON.stringify({ predictedSpecialization: 'General Medicine', confidence: 0.6, urgency: 'Normal', recommended: [] }));
+      navigate('/results');
+    } finally {
+      setIsAnalyzing(false);
+    }
   };
 
   return (

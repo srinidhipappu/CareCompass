@@ -1,10 +1,17 @@
-import { Link, useLocation } from 'react-router';
-import { Activity, LayoutDashboard, User, LogOut } from 'lucide-react';
+import { Link, useLocation, useNavigate } from 'react-router';
+import { Activity, LayoutDashboard, LogOut, User } from 'lucide-react';
 
 export function Navbar() {
-  const location = useLocation();
-  const isDashboardRoute = location.pathname === '/dashboard';
-  
+  const { pathname } = useLocation();
+  const navigate = useNavigate();
+  const userRaw = localStorage.getItem('user');
+  const user = userRaw ? JSON.parse(userRaw) : null;
+
+  const handleLogout = () => {
+    localStorage.removeItem('user');
+    navigate('/');
+  };
+
   return (
     <nav className="bg-white shadow-sm border-b border-gray-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -15,35 +22,41 @@ export function Navbar() {
             </div>
             <span className="text-xl font-semibold text-gray-900">CareCompass AI</span>
           </Link>
-          
+
           <div className="flex items-center gap-4">
-            {isDashboardRoute ? (
+            {user ? (
               <>
-                <Link 
-                  to="/dashboard" 
-                  className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors px-4 py-2"
+                <Link
+                  to="/dashboard"
+                  className={`flex items-center gap-2 transition-colors px-4 py-2 ${
+                    pathname === '/dashboard' ? 'text-[#2563EB] font-medium' : 'text-gray-600 hover:text-gray-900'
+                  }`}
                 >
                   <LayoutDashboard className="w-4 h-4" />
                   Dashboard
                 </Link>
-                <Link 
-                  to="/" 
+                <div className="flex items-center gap-2 text-gray-600 px-2">
+                  <User className="w-4 h-4" />
+                  <span className="text-sm font-medium">{user.name}</span>
+                </div>
+                <button
+                  onClick={handleLogout}
                   className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors px-4 py-2"
                 >
                   <LogOut className="w-4 h-4" />
                   Log out
-                </Link>
+                </button>
               </>
             ) : (
               <>
-                <Link 
-                  to="/login" 
+                <Link
+                  to="/login"
                   className="text-gray-600 hover:text-gray-900 transition-colors px-4 py-2"
                 >
                   Log in
                 </Link>
-                <Link 
-                  to="/signup" 
+                <Link
+                  to="/signup"
                   className="bg-[#2563EB] text-white px-6 py-2 rounded-xl hover:bg-[#1d4ed8] transition-colors"
                 >
                   Sign up

@@ -1,0 +1,6 @@
+venv/
+__pycache__/
+*.pyc
+.DS_Store
+carecompass_model/bert_model/model.safetensors
+carecompass_model/bert_model/pytorch_model.bin

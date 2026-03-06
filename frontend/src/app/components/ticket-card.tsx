@@ -38,7 +38,7 @@ export function TicketCard({ ticket, onClick }: TicketCardProps) {
             {ticket.title}
           </h3>
           <div className="flex items-center gap-2 mb-3">
-            <UrgencyBadge urgency={ticket.urgency} />
+            <UrgencyBadge level={ticket.urgency === 'high' ? 'emergency' : ticket.urgency === 'medium' ? 'urgent' : 'mild'} />
             <span className={`text-xs px-3 py-1 rounded-full font-medium ${statusColors[ticket.status]}`}>
               {ticket.status.charAt(0).toUpperCase() + ticket.status.slice(1)}
             </span>

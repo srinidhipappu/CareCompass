@@ -17,8 +17,13 @@ export function NewTicketModal({ isOpen, onClose }: NewTicketModalProps) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Navigate to results page with the symptoms
-    navigate('/results', { state: { symptoms, description, urgency } });
+    // Save payload to sessionStorage then navigate to results page
+    try {
+      sessionStorage.setItem('ticketPayload', JSON.stringify({ symptoms, description, urgency }));
+    } catch (e) {
+      // ignore storage errors
+    }
+    navigate('/results');
     onClose();
   };
 

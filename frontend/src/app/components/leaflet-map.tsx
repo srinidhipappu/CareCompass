@@ -1,3 +1,7 @@
+"use client";
+
+"use client";
+
 import { useEffect, useRef } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -139,6 +143,25 @@ export function LeafletMap({
       mapRef.current.setView([selectedFacility.position.lat, selectedFacility.position.lng], mapRef.current.getZoom());
     }
   }, [selectedFacility]);
+
+  // Respond to external center prop changes (e.g., zipcode search results)
+  useEffect(() => {
+    if (!mapRef.current) return;
+    try {
+      const map = mapRef.current;
+      // If there are markers/facilities, smoothly fly to the new center
+      if (facilities && facilities.length > 0) {
+        map.flyTo([center.lat, center.lng], Math.max(zoom, map.getZoom()), { animate: true, duration: 0.8 });
+      } else {
+        // otherwise set view directly
+        map.setView([center.lat, center.lng], zoom);
+      }
+    } catch (e) {
+      // swallow map errors
+      // eslint-disable-next-line no-console
+      console.warn('Leaflet set center failed', e);
+    }
+  }, [center, facilities, zoom]);
 
   return (
     <div style={mapContainerStyle}>

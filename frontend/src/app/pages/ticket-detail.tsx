@@ -1,68 +1,78 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router';
 import { Navbar } from '../components/navbar';
 import { UrgencyBadge } from '../components/urgency-badge';
-import { 
-  ArrowLeft, 
-  Calendar, 
-  Clock, 
-  MapPin, 
-  FileText, 
-  Phone,
-  Mail,
-  X,
-  CheckCircle,
-  AlertCircle
+import {
+  ArrowLeft, Calendar, Clock, MapPin, FileText, Phone, X, CheckCircle, AlertCircle
 } from 'lucide-react';
+import api from '../../lib/api';
 
 export default function TicketDetailPage() {
   const { ticketId } = useParams();
   const navigate = useNavigate();
+  const [appt, setAppt] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
 
-  // Mock ticket data - in real app, fetch based on ticketId
-  const ticket = {
-    id: ticketId,
-    title: 'Routine Checkup',
-    symptoms: 'Annual physical examination, general health assessment',
-    urgency: 'low' as const,
-    status: 'confirmed' as const,
-    facility: 'City Medical Center',
-    doctor: 'Sarah Johnson',
-    specialization: 'General Practice',
-    date: 'March 15, 2026',
-    time: '10:00 AM',
-    location: '123 Medical Plaza, San Francisco, CA 94102',
-    phone: '(415) 555-0123',
-    email: 'appointments@citymedical.com',
-    notes: 'Please arrive 15 minutes early to complete any necessary paperwork. Bring your insurance card and ID.',
-    createdAt: 'March 1, 2026',
-  };
+  useEffect(() => {
+    if (!ticketId) return;
+    api.getAppointment(ticketId)
+      .then((res) => setAppt(res?.data))
+      .catch(() => setAppt(null))
+      .finally(() => setLoading(false));
+  }, [ticketId]);
 
-  const handleCancelAppointment = () => {
-    // In real app, make API call to cancel
+  const handleCancel = async () => {
+    if (!ticketId) return;
+    await api.deleteAppointment(ticketId).catch(() => {});
     setShowCancelDialog(false);
     navigate('/dashboard');
   };
 
-  const statusConfig = {
-    pending: { color: 'bg-yellow-100 text-yellow-800', icon: Clock },
-    confirmed: { color: 'bg-green-100 text-green-800', icon: CheckCircle },
-    completed: { color: 'bg-gray-100 text-gray-800', icon: CheckCircle },
-    cancelled: { color: 'bg-red-100 text-red-800', icon: X },
-  };
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Navbar />
+        <div className="max-w-4xl mx-auto px-4 py-20 text-center text-gray-500">Loading...</div>
+      </div>
+    );
+  }
 
-  const StatusIcon = statusConfig[ticket.status].icon;
+  if (!appt) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Navbar />
+        <div className="max-w-4xl mx-auto px-4 py-20 text-center">
+          <p className="text-gray-500 mb-4">Appointment not found.</p>
+          <Link to="/dashboard" className="text-[#2563EB] font-medium">Back to Dashboard</Link>
+        </div>
+      </div>
+    );
+  }
+
+  const date = new Date(appt.appointmentDate);
+  const dateStr = date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+  const timeStr = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+  const urgencyRaw: string = appt.urgency || 'Normal';
+  const urgencyLevel = urgencyRaw === 'Emergency' ? 'emergency' : urgencyRaw === 'Urgent' ? 'urgent' : 'mild';
+
+  const statusColors: Record<string, string> = {
+    pending: 'bg-yellow-100 text-yellow-800',
+    confirmed: 'bg-green-100 text-green-800',
+    completed: 'bg-gray-100 text-gray-800',
+    cancelled: 'bg-red-100 text-red-800',
+  };
+  const status: string = appt.status || 'pending';
+  const StatusIcon = status === 'confirmed' || status === 'completed' ? CheckCircle : status === 'cancelled' ? X : Clock;
+
+  const doctor = appt.doctorId;
+  const hospital = appt.hospitalId;
 
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
-
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <Link
-          to="/dashboard"
-          className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6 transition-colors"
-        >
+        <Link to="/dashboard" className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6 transition-colors">
           <ArrowLeft className="w-5 h-5" />
           Back to Dashboard
         </Link>
@@ -72,189 +82,133 @@ export default function TicketDetailPage() {
           <div className="bg-gradient-to-r from-[#2563EB] to-[#0EA5E9] px-8 py-6 text-white">
             <div className="flex items-start justify-between mb-4">
               <div>
-                <h1 className="text-3xl font-bold mb-2">{ticket.title}</h1>
-                <p className="text-blue-100">Ticket #{ticket.id}</p>
+                <h1 className="text-3xl font-bold mb-1">{doctor?.specialization || 'Appointment'}</h1>
+                <p className="text-blue-100 text-sm">Ticket #{ticketId}</p>
               </div>
-              <div className="flex gap-2">
-                <UrgencyBadge urgency={ticket.urgency} />
-              </div>
+              <UrgencyBadge level={urgencyLevel} />
             </div>
-            <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full ${statusConfig[ticket.status].color}`}>
+            <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium ${statusColors[status] || 'bg-gray-100 text-gray-800'}`}>
               <StatusIcon className="w-4 h-4" />
-              <span className="font-medium capitalize">{ticket.status}</span>
+              <span className="capitalize">{status}</span>
             </div>
           </div>
 
           {/* Content */}
           <div className="p-8">
-            {/* Appointment Details */}
-            <div className="grid md:grid-cols-2 gap-6 mb-8">
-              <div className="space-y-4">
-                <h2 className="text-xl font-bold text-gray-900 mb-4">Appointment Details</h2>
-                
+            <div className="grid md:grid-cols-2 gap-8 mb-8">
+              {/* Left: Appointment details */}
+              <div className="space-y-5">
+                <h2 className="text-xl font-bold text-gray-900">Appointment Details</h2>
+
                 <div className="flex items-start gap-3">
-                  <Calendar className="w-5 h-5 text-[#2563EB] mt-0.5" />
+                  <Calendar className="w-5 h-5 text-[#2563EB] mt-0.5 flex-shrink-0" />
                   <div>
-                    <p className="text-sm text-gray-600">Date</p>
-                    <p className="font-medium text-gray-900">{ticket.date}</p>
+                    <p className="text-sm text-gray-500">Date</p>
+                    <p className="font-medium text-gray-900">{dateStr}</p>
                   </div>
                 </div>
 
                 <div className="flex items-start gap-3">
-                  <Clock className="w-5 h-5 text-[#2563EB] mt-0.5" />
+                  <Clock className="w-5 h-5 text-[#2563EB] mt-0.5 flex-shrink-0" />
                   <div>
-                    <p className="text-sm text-gray-600">Time</p>
-                    <p className="font-medium text-gray-900">{ticket.time}</p>
+                    <p className="text-sm text-gray-500">Time</p>
+                    <p className="font-medium text-gray-900">{timeStr}</p>
                   </div>
                 </div>
 
-                <div className="flex items-start gap-3">
-                  <FileText className="w-5 h-5 text-[#2563EB] mt-0.5" />
-                  <div>
-                    <p className="text-sm text-gray-600">Symptoms</p>
-                    <p className="font-medium text-gray-900">{ticket.symptoms}</p>
+                {appt.symptoms && (
+                  <div className="flex items-start gap-3">
+                    <FileText className="w-5 h-5 text-[#2563EB] mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="text-sm text-gray-500">Symptoms</p>
+                      <p className="font-medium text-gray-900">{appt.symptoms}</p>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
 
-              <div className="space-y-4">
-                <h2 className="text-xl font-bold text-gray-900 mb-4">Provider Information</h2>
-                
-                <div>
-                  <p className="text-sm text-gray-600">Doctor</p>
-                  <p className="font-medium text-gray-900">Dr. {ticket.doctor}</p>
-                  <p className="text-sm text-[#2563EB]">{ticket.specialization}</p>
-                </div>
+              {/* Right: Provider + Hospital */}
+              <div className="space-y-5">
+                <h2 className="text-xl font-bold text-gray-900">Provider Information</h2>
 
-                <div className="flex items-start gap-3">
-                  <MapPin className="w-5 h-5 text-[#2563EB] mt-0.5" />
+                {doctor && (
                   <div>
-                    <p className="text-sm text-gray-600">Location</p>
-                    <p className="font-medium text-gray-900">{ticket.facility}</p>
-                    <p className="text-sm text-gray-600">{ticket.location}</p>
+                    <p className="text-sm text-gray-500">Doctor</p>
+                    <p className="font-medium text-gray-900">{doctor.name}</p>
+                    <p className="text-sm text-[#2563EB]">{doctor.specialization}</p>
                   </div>
-                </div>
+                )}
 
-                <div className="flex items-start gap-3">
-                  <Phone className="w-5 h-5 text-[#2563EB] mt-0.5" />
-                  <div>
-                    <p className="text-sm text-gray-600">Phone</p>
-                    <a href={`tel:${ticket.phone}`} className="font-medium text-[#2563EB] hover:text-[#1d4ed8]">
-                      {ticket.phone}
-                    </a>
+                {hospital && (
+                  <div className="flex items-start gap-3">
+                    <MapPin className="w-5 h-5 text-[#2563EB] mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="text-sm text-gray-500">Hospital</p>
+                      <p className="font-medium text-gray-900">{hospital.name}</p>
+                      <p className="text-sm text-gray-600">{hospital.location}</p>
+                    </div>
                   </div>
-                </div>
+                )}
 
-                <div className="flex items-start gap-3">
-                  <Mail className="w-5 h-5 text-[#2563EB] mt-0.5" />
-                  <div>
-                    <p className="text-sm text-gray-600">Email</p>
-                    <a href={`mailto:${ticket.email}`} className="font-medium text-[#2563EB] hover:text-[#1d4ed8]">
-                      {ticket.email}
-                    </a>
+                {hospital?.contact && (
+                  <div className="flex items-start gap-3">
+                    <Phone className="w-5 h-5 text-[#2563EB] mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="text-sm text-gray-500">Contact</p>
+                      <a href={`tel:${hospital.contact}`} className="font-medium text-[#2563EB] hover:text-[#1d4ed8]">
+                        {hospital.contact}
+                      </a>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             </div>
 
-            {/* Important Notes */}
-            {ticket.notes && (
-              <div className="bg-blue-50 border border-blue-200 rounded-2xl p-6 mb-8">
-                <div className="flex gap-3">
-                  <AlertCircle className="w-5 h-5 text-[#2563EB] flex-shrink-0 mt-0.5" />
-                  <div>
-                    <h3 className="font-semibold text-gray-900 mb-2">Important Notes</h3>
-                    <p className="text-gray-700">{ticket.notes}</p>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Actions */}
-            {ticket.status === 'confirmed' && (
-              <div className="flex flex-col sm:flex-row gap-3">
-                <button className="flex-1 bg-[#2563EB] text-white py-3 rounded-xl font-medium hover:bg-[#1d4ed8] transition-colors">
-                  Add to Calendar
-                </button>
-                <button className="flex-1 bg-white text-gray-700 py-3 rounded-xl font-medium hover:bg-gray-50 transition-colors border border-gray-200">
-                  Reschedule
-                </button>
-                <button
-                  onClick={() => setShowCancelDialog(true)}
-                  className="flex-1 bg-white text-red-600 py-3 rounded-xl font-medium hover:bg-red-50 transition-colors border border-red-200"
-                >
-                  Cancel Appointment
-                </button>
-              </div>
-            )}
-
-            {ticket.status === 'pending' && (
-              <div className="bg-yellow-50 border border-yellow-200 rounded-2xl p-6">
-                <div className="flex items-center gap-3 mb-4">
-                  <Clock className="w-5 h-5 text-yellow-600" />
-                  <h3 className="font-semibold text-gray-900">Pending Confirmation</h3>
-                </div>
-                <p className="text-gray-700 mb-4">
-                  Your appointment is pending confirmation from the healthcare provider. You will receive a notification once it's confirmed.
+            {/* Reminder */}
+            <div className="bg-blue-50 border border-blue-200 rounded-2xl p-5 mb-8">
+              <div className="flex gap-3">
+                <AlertCircle className="w-5 h-5 text-[#2563EB] flex-shrink-0 mt-0.5" />
+                <p className="text-gray-700 text-sm">
+                  Please arrive 15 minutes early. Bring a valid ID and any relevant medical records or previous test results.
                 </p>
-                <button
-                  onClick={() => setShowCancelDialog(true)}
-                  className="text-red-600 font-medium hover:text-red-700"
-                >
-                  Cancel Request
-                </button>
               </div>
+            </div>
+
+            {(status === 'pending' || status === 'confirmed') && (
+              <button
+                onClick={() => setShowCancelDialog(true)}
+                className="w-full sm:w-auto px-8 py-3 bg-white text-red-600 rounded-xl font-medium hover:bg-red-50 transition-colors border border-red-200"
+              >
+                Cancel Appointment
+              </button>
             )}
 
-            {ticket.status === 'completed' && (
-              <div className="bg-green-50 border border-green-200 rounded-2xl p-6">
-                <div className="flex items-center gap-3 mb-4">
-                  <CheckCircle className="w-5 h-5 text-green-600" />
-                  <h3 className="font-semibold text-gray-900">Appointment Completed</h3>
-                </div>
-                <p className="text-gray-700 mb-4">
-                  This appointment was completed on {ticket.date}. Thank you for choosing {ticket.facility}.
-                </p>
-                <button className="text-[#2563EB] font-medium hover:text-[#1d4ed8]">
-                  Book Follow-up Appointment
-                </button>
-              </div>
-            )}
-
-            {/* Metadata */}
-            <div className="mt-8 pt-6 border-t border-gray-200">
-              <p className="text-sm text-gray-500">
-                Ticket created on {ticket.createdAt}
+            <div className="mt-6 pt-5 border-t border-gray-100">
+              <p className="text-sm text-gray-400">
+                Booked on {new Date(appt.createdAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
               </p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Cancel Confirmation Dialog */}
       {showCancelDialog && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-3xl max-w-md w-full p-8">
             <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <AlertCircle className="w-8 h-8 text-red-600" />
             </div>
-            
-            <h2 className="text-2xl font-bold text-gray-900 text-center mb-2">
-              Cancel Appointment?
-            </h2>
-            <p className="text-gray-600 text-center mb-6">
-              Are you sure you want to cancel this appointment? This action cannot be undone.
-            </p>
-
+            <h2 className="text-2xl font-bold text-gray-900 text-center mb-2">Cancel Appointment?</h2>
+            <p className="text-gray-600 text-center mb-6">This action cannot be undone.</p>
             <div className="flex gap-3">
               <button
                 onClick={() => setShowCancelDialog(false)}
                 className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-xl font-medium hover:bg-gray-50 transition-colors"
               >
-                Keep Appointment
+                Keep
               </button>
               <button
-                onClick={handleCancelAppointment}
+                onClick={handleCancel}
                 className="flex-1 px-6 py-3 bg-red-600 text-white rounded-xl font-medium hover:bg-red-700 transition-colors"
               >
                 Cancel Appointment

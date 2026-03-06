@@ -1,18 +1,20 @@
-import { useState } from 'react';
+
+
+import { useState, useEffect } from 'react';
 import zipcodes from 'zipcodes';
 import { Navbar } from '../components/navbar';
 import { HospitalCard } from '../components/hospital-card';
 import { LeafletMap } from '../components/leaflet-map';
 import { SlidersHorizontal } from 'lucide-react';
-import api from '@/lib/api';
+import api from '../../lib/api';
 
 export default function HospitalsPage() {
   const [sortBy, setSortBy] = useState<'distance' | 'rating'>('distance');
   const [selectedFacility, setSelectedFacility] = useState<any | null>(null);
   const [hospitals, setHospitals] = useState<any[]>([]);
   const [facilities, setFacilities] = useState<any[]>([]);
-  const [center, setCenter] = useState({ lat: 37.7749, lng: -122.4194 });
-  const [zip, setZip] = useState('');
+  const [center, setCenter] = useState({ lat: 40.4774, lng: -74.4518 }); // New Brunswick, NJ default
+  const [zip, setZip] = useState('08901');
   const [loading, setLoading] = useState(false);
 
   // Compute distance (km) between two lat/lng points
@@ -41,7 +43,7 @@ export default function HospitalsPage() {
       const lng = parseFloat(info.longitude);
       setCenter({ lat, lng });
 
-      const res = await api.listHospitalsNearby(lat, lng, 50, 1, 50);
+      const res = await api.listHospitalsNearby(lat, lng, 200, 1, 50);
       const items = res.data || [];
 
       // Map hospitals to UI shapes
@@ -78,6 +80,13 @@ export default function HospitalsPage() {
       setLoading(false);
     }
   };
+
+  // Auto-run initial search on page load using default zipcode
+  useEffect(() => {
+    // run on mount
+    handleSearchByZip();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const mapContainerStyle = { width: '100%', height: '100%' };
 

@@ -27,15 +27,16 @@ export const getDoctor = (id: string) => request(`/api/doctors/${id}`);
 
 // Appointments
 export const createAppointment = (payload: any) => request('/api/appointments', { method: 'POST', body: JSON.stringify(payload) });
+export const getAppointment = (id: string) => request(`/api/appointments/${id}`);
 export const getUserAppointments = (userId: string) => request(`/api/appointments/user/${userId}`);
 export const deleteAppointment = (id: string) => request(`/api/appointments/${id}`, { method: 'DELETE' });
 
 // AI
-export const analyzeSymptoms = (payload: { userId?: string; symptomsText: string }) =>
+export const analyzeSymptoms = (payload: { userId?: string; symptomsText: string; lat?: number; lng?: number }) =>
   request('/api/ai/analyze', { method: 'POST', body: JSON.stringify(payload) });
 
 // Admin (requires admin secret header) — pass headers as third arg
 export const seedDB = (adminSecret: string) =>
   fetch(`${BASE}/api/admin/seed`, { method: 'POST', headers: { 'x-admin-secret': adminSecret } }).then((r) => r.json());
 
-export default { register, login, listHospitals, getHospital, listDoctors, getDoctor, createAppointment, getUserAppointments, deleteAppointment, analyzeSymptoms, seedDB };
+export default { register, login, listHospitals, getHospital, listHospitalsNearby, listDoctors, getDoctor, createAppointment, getAppointment, getUserAppointments, deleteAppointment, analyzeSymptoms, seedDB };

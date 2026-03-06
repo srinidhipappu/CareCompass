@@ -24,7 +24,10 @@ router.get('/', async (req, res) => {
 
 router.get('/specialty/:specialization', async (req, res) => {
   try {
-    const doctors = await Doctor.find({ specialization: req.params.specialization }).limit(50);
+    const doctors = await Doctor.find({ specialization: req.params.specialization })
+      .sort({ rating: -1 })
+      .limit(10)
+      .select('name hospital rating specialization availability location experienceYears');
     res.json(successResponse(doctors));
   } catch (err) {
     res.status(500).json(errorResponse('Failed to query doctors'));

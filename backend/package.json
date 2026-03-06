@@ -6,6 +6,7 @@
     "start": "node server.js",
     "dev": "nodemon server.js",
     "seed": "node utils/seed.js",
+    "seed:doctors": "node scripts/seedDoctors.js",
     "migrate:populate-hospital-coords": "node scripts/populateHospitalCoords.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -14,14 +15,17 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@faker-js/faker": "^9.0.0",
     "axios": "^1.13.6",
+    "bcrypt": "^5.1.0",
     "cors": "^2.8.6",
     "dotenv": "^17.3.1",
     "express": "^5.2.1",
     "mongoose": "^9.2.3",
-    "bcrypt": "^5.1.0",
-    "morgan": "^1.10.0"
-    ,
+    "morgan": "^1.10.0",
     "zipcodes": "^8.0.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
   }
 }
