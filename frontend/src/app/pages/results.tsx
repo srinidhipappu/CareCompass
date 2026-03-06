@@ -196,10 +196,10 @@ export default function ResultsPage() {
             View Nearby Hospitals
           </button>
           <button
-            onClick={() => navigate('/')}
+            onClick={() => navigate('/dashboard')}
             className="flex-1 bg-white text-gray-700 py-4 rounded-xl font-medium hover:bg-gray-50 transition-colors border border-gray-200"
           >
-            New Symptom Check
+            Back to Dashboard
           </button>
         </div>
 

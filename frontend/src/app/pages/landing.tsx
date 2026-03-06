@@ -1,8 +1,15 @@
-import { Link } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 import { Navbar } from '../components/navbar';
 import { ClipboardList, Brain, Calendar } from 'lucide-react';
 
 export default function LandingPage() {
+  const navigate = useNavigate();
+  const user = (() => { try { const r = localStorage.getItem('user'); return r ? JSON.parse(r) : null; } catch { return null; } })();
+
+  const handleGetStarted = () => {
+    if (user) { navigate('/dashboard'); } else { navigate('/signup'); }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-blue-50">
       <Navbar />
@@ -18,14 +25,24 @@ export default function LandingPage() {
               Powered by advanced AI, CareCompass analyzes your symptoms and connects you 
               with the right specialists and hospitals in minutes.
             </p>
-            <Link
-              to="/symptoms"
-              className="inline-block bg-[#2563EB] text-white px-8 py-4 rounded-xl text-lg font-medium hover:bg-[#1d4ed8] transition-all shadow-lg shadow-blue-200 hover:shadow-xl"
-            >
-              Start Symptom Check
-            </Link>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <button
+                onClick={handleGetStarted}
+                className="inline-block bg-[#2563EB] text-white px-8 py-4 rounded-xl text-lg font-medium hover:bg-[#1d4ed8] transition-all shadow-lg shadow-blue-200 hover:shadow-xl"
+              >
+                {user ? 'Go to Dashboard' : 'Get Started — It\'s Free'}
+              </button>
+              {!user && (
+                <Link
+                  to="/login"
+                  className="inline-block bg-white text-[#2563EB] px-8 py-4 rounded-xl text-lg font-medium hover:bg-gray-50 transition-all border border-gray-200"
+                >
+                  Sign In
+                </Link>
+              )}
+            </div>
             <p className="text-sm text-gray-500 mt-4">
-              Free • Instant Results • No Registration Required
+              Create a free account to start your symptom check
             </p>
           </div>
           
